@@ -1,3 +1,5 @@
+import csv
+
 import pygame
 from time import time, sleep
 import os
@@ -6,7 +8,7 @@ import math
 
 
 def load_image(name, colorkey=None):
-    fullname = os.path.join('data', name)
+    fullname = os.path.join(name)
     if not os.path.isfile(fullname):
         print(f"Файл с изображением '{fullname}' не найден")
         sys.exit()
@@ -14,7 +16,7 @@ def load_image(name, colorkey=None):
     return image
 
 
-tile_width = tile_height = 200
+tile_size = 100
 
 
 class car:
@@ -30,22 +32,13 @@ class car:
 
         for i in range(0, 360):
             i_coords = ()
-            """i_coords = file[i][:-3].split('), ')
-            i_coords = (tuple(i_coords[0][1:].split(', ')), tuple(i_coords[1][1:].split(', ')),
-                        tuple(i_coords[2][1:].split(', ')), tuple(i_coords[3][1:].split(', ')))
-            i_coords = ((int(i_coords[0][0]) * 0.185, int(i_coords[0][1]) * 0.185), (int(i_coords[2][0]) * 0.185, int(i_coords[2][1]) * 0.185),
-                        (int(i_coords[1][0]) * 0.185, int(i_coords[1][1]) * 0.185), (int(i_coords[3][0]) * 0.185, int(i_coords[3][1]) * 0.185))"""
             self.images.append((pygame.transform.scale(
-                pygame.image.load(path + '\\' + '0' * (4 - len(str(i))) + str(i) + '.png'), (100, 100)), i_coords))
+                pygame.image.load(path + '\\' + '0' * (4 - len(str(i))) + str(i) + '.png'), (50, 50)), i_coords))
         # print(self.images)
 
     def draw(self):
         # i_coord = self.images[int(self.degree)][1]
         main_display.blit(self.images[int(self.degree)][0], (860, 440))
-        """pygame.draw.polygon(main_display, (255, 0, 0), ((i_coord[0][0] + self.coord[0], i_coord[0][1] + self.coord[1]),
-                                                        (i_coord[1][0] + self.coord[0], i_coord[1][1] + self.coord[1]),
-                                                        (i_coord[2][0] + self.coord[0], i_coord[2][1] + self.coord[1]),
-                                                        (i_coord[3][0] + self.coord[0], i_coord[3][1] + self.coord[1])))"""
 
     def move(self, fps):
         deg = 0
@@ -93,26 +86,13 @@ class car:
         popr_speed_x += (drift_x * (deg / 90) * 0.03) * abs(self.x_speed)
         popr_speed_y += (drift_y * (deg / 90) * 0.03) * abs(self.y_speed)
 
-        """if self.degree >= 270:
-            popr_speed_x += 0.02 * (1 - (abs(deg) / 90)) * abs(self.x_speed) * math.cos(math.radians(90 - self.degree - 270))
-            popr_speed_y += 0.02 * (1 - (abs(deg) / 90)) * abs(self.y_speed) * math.sin(math.radians(90 - self.degree - 270))
-        elif 270 > self.degree >= 180:
-            popr_speed_x += 0.02 * (1 - (abs(deg) / 90)) * abs(self.x_speed) * math.cos(math.radians(self.degree - 180))
-            popr_speed_y -= 0.02 * (1 - (abs(deg) / 90)) * abs(self.y_speed) * math.sin(math.radians(self.degree - 180))
-        elif 180 > self.degree >= 90:
-            popr_speed_x -= 0.02 * (1 - (abs(deg) / 90)) * abs(self.x_speed) * math.cos(math.radians(90 - self.degree - 90))
-            popr_speed_y -= 0.02 * (1 - (abs(deg) / 90)) * abs(self.y_speed) * math.sin(math.radians(90 - self.degree - 90))
-        else:
-            popr_speed_x -= 0.02 * (1 - (abs(deg) / 90)) * abs(self.x_speed) * math.cos(math.radians(self.degree))
-            popr_speed_y += 0.02 * (1 - (abs(deg) / 90)) * abs(self.y_speed) * math.sin(math.radians(self.degree))"""
-
         self.x_speed *= 0.999
         self.y_speed *= 0.999
         self.x_speed += popr_speed_x
         self.y_speed += popr_speed_y
 
-        self.coord[0] += self.x_speed / fps
-        self.coord[1] += self.y_speed / fps
+        self.coord[0] += (self.x_speed * 0.5) / fps
+        self.coord[1] += (self.y_speed * 0.5) / fps
 
     def get_coord(self):
         return self.coord
@@ -221,12 +201,12 @@ class Snow(pygame.sprite.Sprite):
     def __init__(self, x, y, group):
         super().__init__(group)
         self.image = Snow.image
-        self.cx = x * 200
-        self.cy = y * 200
+        self.cx = x * tile_size
+        self.cy = y * tile_size
         self.rect = self.image.get_rect().move(
-            200 * x, 200 * y)
-        self.rect.x = x * 200
-        self.rect.y = y * 200
+            tile_size * x, tile_size * y)
+        self.rect.x = x * tile_size
+        self.rect.y = y * tile_size
 
 
 class Road(pygame.sprite.Sprite):
@@ -235,18 +215,18 @@ class Road(pygame.sprite.Sprite):
     def __init__(self, x, y, group):
         super().__init__(group)
         self.image = Road.image
-        self.cx = x * 200
-        self.cy = y * 200
+        self.cx = x * tile_size
+        self.cy = y * tile_size
         self.rect = self.image.get_rect().move(
-            200 * x, 200 * y)
-        self.rect.x = x * 200
-        self.rect.y = y * 200
+            tile_size * x, tile_size * y)
+        self.rect.x = x * tile_size
+        self.rect.y = y * tile_size
 
 
 def generate_level(level, all_sprites):
     for y in range(len(level)):
         for x in range(len(level[y])):
-            if level[y][x] == 0:
+            if level[y][x] == '0':
                 Snow(x, y, all_sprites[0])
             else:
                 Road(x, y, all_sprites[1])
@@ -256,142 +236,14 @@ def generate_level(level, all_sprites):
 
 class MapMark:
     def __init__(self, lvl_number):
-        self.map = [
-            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 1],
-            [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             1,
-             0, 0, 0],
-            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-             0,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             1,
-             0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             1, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 1, 0],
-            [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-             0,
-             0, 0, 1]]
-        self.lvl_n = lvl_number
+        self.map = []
+        self.lvl_path = f'level_{lvl_number}_grid_map_layout.csv'
+        with open(self.lvl_path, encoding="utf8") as csvfile:
+            reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+            for row in reader:
+                self.map.append(row)
         self.x_cam = 0
         self.y_cam = 0
-
-    '''def render(self):
-        for y in range(len(self.map)):
-            for x in range(len(self.map[y])):
-                if self.map[y][x] == 1 and \
-                        display_x_size / len(self.map[y]) * x + 14 + self.x_cam > 100 and display_x_size / len(
-                    self.map[y]) * x + 14 + self.x_cam < 700 and \
-                        display_y_size / len(self.map) * y + 14 + self.y_cam > 100 and display_y_size / len(
-                    self.map) * y + 14 + self.y_cam < 700:
-                    pygame.draw.circle(main_display, (100, 100, 100), (
-                        display_x_size / len(self.map[y]) * x + 14 + self.x_cam,
-                        display_y_size / len(self.map) * y + 14 + self.y_cam), 14)'''
 
 
 if __name__ == '__main__':
@@ -408,11 +260,8 @@ if __name__ == '__main__':
     all_sprites = [all_snow, all_road]
     offset_x = 0
     offset_y = 0
-    '''a = []
-    bg = pygame.image.load("bg.jpg")'''
     generate_level(map.map, all_sprites)
     n = 0
-    '''main_display.blit(bg, (0, 0))'''
     while running:
         tt = time()
 
@@ -440,33 +289,6 @@ if __name__ == '__main__':
                     keys.remove('D')
 
         main_display.fill((0, 40, 0))
-        '''if 'W' in keys:
-            for group in all_sprites:
-                for elem in group:
-                    elem.rect.y += mark_2.y_speed // 100
-            mark_2.change_speed(10)
-        if 'A' in keys:
-            for group in all_sprites:
-                for elem in group:
-                    elem.rect.x += mark_2.x_speed // 100
-            mark_2.change_wheel(-0.01)
-        if 'S' in keys:
-            for group in all_sprites:
-                for elem in group:
-                    elem.rect.y -= mark_2.y_speed // 100
-            mark_2.change_speed(-10)
-        if 'D' in keys:
-            for group in all_sprites:
-                for elem in group:
-                    elem.rect.x -= mark_2.x_speed // 100
-            mark_2.change_wheel(0.01)
-        if not 'D' in keys and not 'A' in keys:
-            if abs(mark_2.get_wheel()) < 0.01:
-                mark_2.set_wheel(0)
-            elif mark_2.get_wheel() > 0:
-                mark_2.change_wheel(-0.01)
-            elif mark_2.get_wheel() < 0:
-                mark_2.change_wheel(0.01)'''
         if 'A' in keys:
             # mark_2.change_turn((-0.5 * ((mark_2.get_speed()[0] ** 2 + mark_2.get_speed()[1] ** 2) ** 0.5)) / fps)
             # mark_2.change_turn(-0.1)
